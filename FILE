@@ -1,0 +1,69 @@
+
+pipeline {
+    
+    agent any
+    
+    tools{
+        jdk 'myjava'
+        maven 'mymaven'
+    }
+
+   stages{
+       
+       stage('CloneRepo')
+       {
+           steps{
+               git 'https://github.com/geetika20r/edureka-assign1.git'
+ 
+           }
+       }
+       
+       stage('DEVELOPER_COMPILE')
+       {
+           steps{
+               sh 'compile'
+               
+           }
+       }
+       
+       stage('DEVELOPER_CODE_REVIEW')
+       {
+           steps{
+               sh 'mvn pmd:pmd'
+           }
+           post{
+               success{
+                   recordIssues(tools: [pmdParser(pattern: 'target/pmd.xml')])
+               }
+           }
+       }
+       
+       stage('QA_UNIT_TEST')
+       {
+           steps{
+               sh 'mvn test'
+           }
+           post{
+               success{
+                   junit 'target/surefire-reports/*.xml'
+               }
+           }
+       }
+       
+       stage('QA_METRICS_CHECK')
+       {
+           steps{
+               sh 'mvn cobertura:cobertura -Dcobertura.report.format=xml'
+           }
+       }
+       
+       stage('QA_PACKAGE')
+       {
+           steps{
+               sh 'mvn package'
+           }
+       }
+   }
+   
+   
+}
